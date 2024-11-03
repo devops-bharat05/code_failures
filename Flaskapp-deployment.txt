@@ -1,0 +1,66 @@
+---------------------------
+installation steps
+----------------------------
+sudo apt-get update
+sudo apt install python3-pip -y
+sudo apt install python3-virtualenv -y
+sudo virtualenv venv
+sudo chown -R ubuntu:ubuntu ~/myapp/venv
+source venv/bin/activate
+pip install Flask
+pip install gunicorn
+---------------------------
+app.py
+---------------------------
+from flask import Flask
+import time
+app = Flask(__name__)
+
+@app.route('/name')
+def get_name():
+	return 'Devops Bharat'
+
+@app.route('/version')
+def get_version():
+	return 'v1.0.0.0'
+
+if __name__== '__main__':
+	app.run(host='0.0.0.0', port=5000)
+---------------------------------------------
+gunicorn -b 0.0.0.0:5000 app:app
+
+
+
+nohup gunicorn -w 5 -b 0.0.0.0:5000 app:app &
+---------------------------------------------
+Creating service file
+-----------------------------------------------
+sudo vim /etc/systemd/system/myapp.service
+cp /etc/systemd/system/myapp.service /etc/systemd/system/myapp.service
+-------------
+myapp.service
+-------------
+[Unit]
+Description=Gunicorn instance to serve Flask application
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/myapp
+Environment="PATH=/home/ubuntu/myapp/venv/bin"
+ExecStart=/home/ubuntu/myapp/venv/bin/gunicorn -b 0.0.0.0:5000 app:app
+
+[Install]
+WantedBy=multi-user.target
+
+==================================
+# Reload systemd to recognize the new service file
+sudo systemctl daemon-reload
+
+# Start the Flask application service
+sudo systemctl start myapp
+
+# Enable the service to start on boot
+sudo systemctl enable myapp
+
